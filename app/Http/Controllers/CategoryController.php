@@ -39,7 +39,7 @@ class CategoryController extends Controller
             'parent_id' => $parent_id,
             'level' => $level,
         ]);
-        return;
+        return ;
     }
 
     /**
@@ -62,7 +62,29 @@ class CategoryController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $parent_id = $request->input('parent_id') == 0 ? null : $request->input('parent_id');
+        $level = $parent_id !== null ? Category::find($parent_id)->level + 1 : 0;
+        $request->validate([
+            'name' => 'required',
+            'parent_id' => 'numeric'
+        ]);
+        $category = Category::find($id);
+        $sub_categories = (new CategoryResource($category))->sub_categories;
+        childrenLevel($sub_categories,$level);
+        // $sub_categories->map(function ($item)use($level) {
+        //     $item->update([
+        //         'level' => $level+1,
+        //     ]);
+        // });
+        // $sub_categories->update([
+        //     'level' => $level-1,
+        // ]);
+        $category->update([
+            'name' => $request->input('name'),
+            'parent_id' => $parent_id,
+            'level' => $level,
+        ]);
+        return $category;
     }
 
     /**

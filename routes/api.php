@@ -25,6 +25,7 @@ Route::get('/state',function(Request $request){
     $auth = Auth::check() ? 'true':'false';
     return $auth;
 });
-
+Route::middleware(['throttle:60,1'])->group(function () {
+    Route::apiResource('category',CategoryController::class);
+});
 Route::apiResource('product',ProductController::class);
-Route::apiResource('category',CategoryController::class);

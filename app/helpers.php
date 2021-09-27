@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Resources\CategoryResource;
 use Illuminate\Http\JsonResponse;
 
 if (!function_exists('dumph')) {
@@ -19,5 +20,19 @@ if (!function_exists('dumph')) {
         header('Access-Control-Allow-Headers: *');
         header('Access-Control-Allow-Credentials: true');
         dump($var);
+    }
+}
+if (!function_exists('childrenLevel')) {
+    function childrenLevel($children,$level){
+        $children->map(function ($item)use($level) {
+            $newLevel = $level + 1;
+            $item->update([
+                'level' => $newLevel,
+            ]);
+            $items = (new CategoryResource($item))->sub_categories->collect();
+            if(count($items->all()) > 0 ){
+                childrenLevel($items,$newLevel);
+            }
+        });
     }
 }
