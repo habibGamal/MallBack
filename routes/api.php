@@ -4,6 +4,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -29,3 +30,8 @@ Route::middleware(['throttle:60,1'])->group(function () {
     Route::apiResource('category',CategoryController::class);
 });
 Route::apiResource('product',ProductController::class);
+Route::get('/getCookie',function(){
+    return response('Hello World')->cookie(
+        'test', 'value', 120, '/' , false , '.mallonlineback.co', false
+    );
+});
