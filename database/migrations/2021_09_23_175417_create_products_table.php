@@ -22,7 +22,7 @@ class CreateProductsTable extends Migration
             // 0 => Out of stock
             // 1 => In stick
             // 2 => Upcomming
-            $table->set('stock',['0','1','2']);
+            $table->enum('stock',['0','1','2']);
             $table->boolean('returnable');
             // => optional
             $table->text('description')->nullable();
