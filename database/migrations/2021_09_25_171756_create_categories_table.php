@@ -19,7 +19,6 @@ class CreateCategoriesTable extends Migration
             $table->string('name');
             $table->unsignedTinyInteger('level')->default(0);
             $table->timestamps();
-            $table->foreign('parent_id')->references('id')->on('categories')->onDelete('cascade');
         });
     }
 
