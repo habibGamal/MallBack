@@ -14,6 +14,7 @@ class AddForeignKeyToCategories extends Migration
     public function up()
     {
         Schema::table('categories', function (Blueprint $table) {
+            $table->unsignedInteger('parent_id')->nullable();
             $table->foreign('parent_id')->references('id')->on('categories')->onDelete('cascade');
         });
     }
