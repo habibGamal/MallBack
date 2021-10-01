@@ -50,7 +50,7 @@ class ProductController extends Controller
             'pictures'=>json_encode($picturesStore),
         ]);
         
-        return dumph($product);
+        return $product;
     }
 
     /**
