@@ -15,7 +15,6 @@ class CategoryController extends Controller
      */
     public function index()
     {
-        // dumph(Category::where('parent_id','IS','NULL')->get());
         $categories = CategoryResource::collection(Category::whereNull('parent_id')->get());
         return $categories;
     }
@@ -71,20 +70,12 @@ class CategoryController extends Controller
         $category = Category::find($id);
         $sub_categories = (new CategoryResource($category))->sub_categories;
         childrenLevel($sub_categories,$level);
-        // $sub_categories->map(function ($item)use($level) {
-        //     $item->update([
-        //         'level' => $level+1,
-        //     ]);
-        // });
-        // $sub_categories->update([
-        //     'level' => $level-1,
-        // ]);
         $category->update([
             'name' => $request->input('name'),
             'parent_id' => $parent_id,
             'level' => $level,
         ]);
-        return $category;
+        return ;
     }
 
     /**

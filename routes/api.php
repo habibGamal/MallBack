@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
@@ -18,20 +20,25 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return 'authenticated';
+Route::middleware('auth:sanctum')->group(function () {
+    
+    Route::post('/logout',[AuthController::class,'logout']);
+    Route::post('/clear-tokens',[AuthController::class,'clearTokens']);
 });
 
 Route::get('/state',function(Request $request){
-    $auth = Auth::check() ? 'true':'false';
+    $auth = Auth::guard('sanctum')->check() ? 'true':'false';
     return $auth;
 });
+
 Route::middleware(['throttle:60,1'])->group(function () {
     Route::apiResource('category',CategoryController::class);
 });
+
 Route::apiResource('product',ProductController::class);
-Route::get('/getCookie',function(){
-    return response('Hello World')->cookie(
-        'test', 'value', 120, '/' , false , '.mallonlineback.co', false
-    );
+
+Route::post('/login',[AuthController::class,'login']);
+
+Route::get('/getheaders',function(Request $request){
+    dumph($request->header());
 });
