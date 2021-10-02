@@ -33,9 +33,15 @@ class ProductController extends Controller
         $pictures = $request->file('pictures');
         $picturesStore = [];
         foreach($pictures as $key=>$picture){
-            $path = $picture->storePublicly('public/products');
             $position = $request->pictures_position[$key];
-            $picturesStore[] = ['path'=>$path,'position'=>$position];
+            if(env('DISK','google') === 'google'){
+                $path = $picture->store('','google');
+                $url = Storage::disk('google')->url($path);
+                $picturesStore[] = ['path'=>$url,'position'=>$position];
+            }else{
+                $path = $picture->storePublicly('public/products');
+                $picturesStore[] = ['path'=>$path,'position'=>$position];
+            }
         }
         $product = Product::create([
             'name'=>$request->input('name'),
@@ -61,7 +67,8 @@ class ProductController extends Controller
      */
     public function show($id)
     {
-        //
+
+        return Product::findOrFail($id);
     }
 
     /**

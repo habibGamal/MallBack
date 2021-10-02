@@ -35,7 +35,7 @@ class ProductRequest extends FormRequest
             'brand'=>'nullable|string',
             'warranty'=>'nullable|string',
             'pictures'=>'required',
-            'pictures.*'=>'mimes:png,jpg,jpeg|max:1024',
+            'pictures.*'=>'mimes:png,jpg,jpeg,webp|max:1024',
         ];
     }
 }
