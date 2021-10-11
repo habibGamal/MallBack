@@ -18,7 +18,7 @@ class CreateProductsTable extends Migration
             $table->json('pictures');
             $table->string('name');
             $table->unsignedMediumInteger('price');
-            $table->unsignedMediumInteger('offer_price');
+            $table->unsignedMediumInteger('offer_price')->nullable();
             // 0 => Out of stock
             // 1 => In stick
             // 2 => Upcomming

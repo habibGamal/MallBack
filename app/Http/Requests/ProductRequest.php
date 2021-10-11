@@ -28,6 +28,7 @@ class ProductRequest extends FormRequest
             'name'=>'required|min:3|max:255|string',
             'price'=>'required|numeric|min:0',
             'offer_price'=>'nullable|numeric',
+            'category'=>'required|integer|min:0',
             'stock'=>['required',Rule::in(['0','1','2'])],
             'returnable'=>'required|boolean',
             'description'=>'nullable|string',
@@ -36,6 +37,8 @@ class ProductRequest extends FormRequest
             'warranty'=>'nullable|string',
             'pictures'=>'required',
             'pictures.*'=>'mimes:png,jpg,jpeg,webp|max:1024',
+            'colors_option'=>'nullable|json',
+            'sizes_option'=>'nullable|json',
         ];
     }
 }

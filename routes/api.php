@@ -36,6 +36,7 @@ Route::middleware(['throttle:60,1'])->group(function () {
 });
 
 Route::apiResource('product',ProductController::class);
+Route::post('/product/deleteList',[ProductController::class,'destroyList']);
 
 Route::post('/login',[AuthController::class,'login']);
 
