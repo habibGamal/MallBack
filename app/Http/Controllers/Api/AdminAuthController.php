@@ -3,17 +3,17 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
-use DateTime;
+use App\Models\Admin;
 use Illuminate\Http\Request;
+use DateTime;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
-class AuthController extends Controller
+class AdminAuthController extends Controller
 {
     public function login(Request $request){
-        if(Auth::guard('sanctum')->check()){
+        if(Auth::guard('admin')->check()){
             return redirectJson('LOGIN');
         }
         $request->validate([
@@ -21,7 +21,7 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
     
-        $user = User::where('email', $request->email)->first();
+        $user = Admin::where('email', $request->email)->first();
     
         if (! $user || ! Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
@@ -32,12 +32,12 @@ class AuthController extends Controller
         return $user->createToken((new DateTime())->getTimestamp())->plainTextToken;
     }
     public function logout(Request $request){
-        $request->user()->currentAccessToken()->delete();
+        $request->user('admin')->currentAccessToken()->delete();
     
         return ;
     }
     public function clearTokens(Request $request){
-        $request->user()->tokens()->delete();
+        $request->user('admin')->tokens()->delete();
         return ;
     }
 }

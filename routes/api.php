@@ -1,12 +1,12 @@
 <?php
 
-use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\UserAuthController;
+use App\Http\Controllers\Api\AdminAuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
-use App\Models\User;
+use App\Http\Controllers\StoreController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -20,26 +20,42 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+// manage authentication
+
+// => user login
+Route::post('/login', [UserAuthController::class, 'login']);
+// => admin login
+Route::post('/admin-login', [AdminAuthController::class, 'login']);
+// => logout
 Route::middleware('auth:sanctum')->group(function () {
-    
-    Route::post('/logout',[AuthController::class,'logout']);
-    Route::post('/clear-tokens',[AuthController::class,'clearTokens']);
+    Route::post('/admin-logout', [AdminAuthController::class, 'logout']);
+    Route::post('/logout', [UserAuthController::class, 'logout']);
+    Route::post('/clear-tokens', [UserAuthController::class, 'clearTokens']);
 });
 
-Route::get('/state',function(Request $request){
-    $auth = Auth::guard('sanctum')->check() ? 'true':'false';
-    return $auth;
+// => get state of current user
+Route::get('/state', function () {
+    $user = Auth::guard('user')->check();
+    $admin = Auth::guard('admin')->check();
+    return ["user" => $user, "admin" => $admin];
 });
 
+
+// api resources
+
+// => category
 Route::middleware(['throttle:60,1'])->group(function () {
-    Route::apiResource('category',CategoryController::class);
+    Route::apiResource('category', CategoryController::class);
 });
+// => product
+Route::apiResource('product', ProductController::class);
+Route::post('/product/deleteList', [ProductController::class, 'destroyList']);
+// => store
+Route::apiResource('store', StoreController::class);
 
-Route::apiResource('product',ProductController::class);
-Route::post('/product/deleteList',[ProductController::class,'destroyList']);
 
-Route::post('/login',[AuthController::class,'login']);
+// testing area
 
-Route::get('/getheaders',function(Request $request){
+Route::get('/getheaders', function (Request $request) {
     dumph($request->header());
 });
