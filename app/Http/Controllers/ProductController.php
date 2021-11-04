@@ -31,25 +31,8 @@ class ProductController extends Controller
     {
         // => validate request
         $request->validated();
-        // => pictures array of picture
-        $pictures = $request->file('pictures');
-        $picturesStore = [];
-        foreach ($pictures as $key => $picture) {
-            // => get the position of each picture
-            $position = $request->pictures_position[$key];
-            // => choose disk (locally or on google drive)
-            if (env('DISK', 'google') === 'google') {
-                // => store it in disk 
-                $path = $picture->store('', 'google');
-                // => get its url to save it in database
-                $url = Storage::disk('google')->url($path);
-                // => push the path and the position in picturesStore
-                $picturesStore[] = ['path' => $url, 'position' => $position];
-            } else {
-                $path = $picture->storePublicly('public/products');
-                $picturesStore[] = ['path' => $path, 'position' => $position];
-            }
-        }
+        // => handle pictures
+        $jsonPictures = savePhotos($request->file('pictures'),$request->pictures_position);
         // => create product
         $product = Product::create([
             'name' => $request->input('name'),
@@ -62,7 +45,7 @@ class ProductController extends Controller
             'specifications' => $request->input('specifications'),
             'brand' => $request->input('brand'),
             'warranty' => $request->input('warranty'),
-            'pictures' => json_encode($picturesStore),
+            'pictures' => $jsonPictures,
         ]);
         // => create colors option if it exists
         if ($colors = $request->input('colors_option')) {

@@ -3,42 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Api\RegisterAdminController;
+use App\Http\Requests\BranchRequest;
 use App\Models\Store;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
-class StoreController extends RegisterAdminController
+class StoreController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        // dumph($request->all());
-        $adminData = [
-            'name' => $request->input('name'),
-            'email' => $request->input('email'),
-            'password' => $request->input('password'),
-            'phone_number' => $request->input('phone_number'),
-            'card_id' => $request->input('card_id'),
-        ];
-        // => create admin account
-        $admin = $this->create($adminData);
-        // => validate the store info
-        $request->validate([
+    private function storeRules(){
+        return [
             'governorate' => 'required|string',
             'can_return' => 'required|boolean',
             'business_type' => 'required|string',
@@ -58,10 +31,34 @@ class StoreController extends RegisterAdminController
             'work_hours' => 'required|array',
             'work_hours.from' => 'required|integer|min:1|max:12',
             'work_hours.to' => 'required|integer|min:1|max:12',
-            'work_hours.p1' => ['required',Rule::in(['am', 'pm',])],
-            'work_hours.p2' => ['required',Rule::in(['am', 'pm',])],
+            'work_hours.p1' => ['required', Rule::in(['am', 'pm',])],
+            'work_hours.p2' => ['required', Rule::in(['am', 'pm',])],
+    
+        ];
+    }
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function index()
+    {
+        //
+    }
 
-        ]);
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function store(Request $request,BranchController $branchController,RegisterAdminController $registerAdminController)
+    {
+        // dumph($request->all());
+        // => validation {{ I am not using StoreRequest to validate as I validate more than one thing (branch,admin) }}
+        $request->validate($this->storeRules());
+        // => create admin account
+        $admin = $registerAdminController->register($request);
         // => create store
         $store = Store::create([
             'governorate' => $request->input('governorate'),
@@ -72,7 +69,8 @@ class StoreController extends RegisterAdminController
             'work_hours' => implode(',', $request->input('work_hours')),
             'admin_id' => $admin->id,
         ]);
-        return $store;
+        $branch = $branchController->store($request, 4);
+        return $branch;
     }
 
     /**

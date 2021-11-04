@@ -5,17 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Store extends Model
+class Branch extends Model
 {
     use HasFactory;
 
     protected $guarded = [];
 
-    public function admin(){
-        return $this->belongsTo(Admin::class);
-    }
-
-    public function branches(){
-        return $this->hasMany(Branch::class);
+    public function store(){
+        return $this->belongsTo(Store::class);
     }
 }

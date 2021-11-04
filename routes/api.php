@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Api\UserAuthController;
 use App\Http\Controllers\Api\AdminAuthController;
+use App\Http\Controllers\Api\RegisterAdminController;
+use App\Http\Controllers\Api\RegisterUserController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\StoreController;
@@ -22,8 +24,11 @@ use Illuminate\Support\Facades\Route;
 
 // manage authentication
 
-// => user login
+// => user 
+// - login
+// - register
 Route::post('/login', [UserAuthController::class, 'login']);
+Route::post('/register', [RegisterUserController::class, 'register']);
 // => admin login
 Route::post('/admin-login', [AdminAuthController::class, 'login']);
 // => logout
