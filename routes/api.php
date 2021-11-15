@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\UserAuthController;
 use App\Http\Controllers\Api\AdminAuthController;
 use App\Http\Controllers\Api\RegisterAdminController;
 use App\Http\Controllers\Api\RegisterUserController;
+use App\Http\Controllers\BranchController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\StoreController;
@@ -57,6 +58,8 @@ Route::apiResource('product', ProductController::class);
 Route::post('/product/deleteList', [ProductController::class, 'destroyList']);
 // => store
 Route::apiResource('store', StoreController::class);
+// => branch
+Route::apiResource('branch', BranchController::class);
 
 
 // testing area

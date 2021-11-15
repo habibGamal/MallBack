@@ -6,11 +6,13 @@ use App\Http\Controllers\Api\RegisterAdminController;
 use App\Http\Requests\BranchRequest;
 use App\Models\Store;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
 class StoreController extends Controller
 {
-    private function storeRules(){
+    private function storeRules()
+    {
         return [
             'governorate' => 'required|string',
             'can_return' => 'required|boolean',
@@ -26,14 +28,15 @@ class StoreController extends Controller
                     'Tuesday',
                     'Wednesday',
                     'Thursday',
+                    'Work every day'
                 ])
             ],
             'work_hours' => 'required|array',
             'work_hours.from' => 'required|integer|min:1|max:12',
             'work_hours.to' => 'required|integer|min:1|max:12',
-            'work_hours.p1' => ['required', Rule::in(['am', 'pm',])],
-            'work_hours.p2' => ['required', Rule::in(['am', 'pm',])],
-    
+            'work_hours.from-per' => ['required', Rule::in(['am', 'pm',])],
+            'work_hours.to-per' => ['required', Rule::in(['am', 'pm',])],
+
         ];
     }
     /**
@@ -52,11 +55,13 @@ class StoreController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request,BranchController $branchController,RegisterAdminController $registerAdminController)
+    public function store(Request $request, RegisterAdminController $registerAdminController)
     {
-        // dumph($request->all());
-        // => validation {{ I am not using StoreRequest to validate as I validate more than one thing (branch,admin) }}
-        $request->validate($this->storeRules());
+        dumph($request->all());
+        // => validation {{ I am not using StoreRequest to validate as I validate more than one thing (branch,admin,store) }}
+        $valildator = Validator::make($request->all(), $this->storeRules(), [], ['work_hours.from' => 'Work hours from', 'work_hours.to' => 'Work hours to']);
+        $validated = $valildator->validated();
+        // $request->validate($this->storeRules());
         // => create admin account
         $admin = $registerAdminController->register($request);
         // => create store
@@ -69,8 +74,7 @@ class StoreController extends Controller
             'work_hours' => implode(',', $request->input('work_hours')),
             'admin_id' => $admin->id,
         ]);
-        $branch = $branchController->store($request, 4);
-        return $branch;
+        return $store;
     }
 
     /**

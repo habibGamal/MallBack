@@ -20,7 +20,7 @@ class CreateAdminsTable extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->string('phone_number',15);
-            $table->string('card_id');
+            $table->string('card_id')->uniqid();
             $table->rememberToken();
             $table->timestamps();
         });

@@ -16,6 +16,10 @@ class BranchController extends Controller
         'logo_position' => 'string|nullable',
     ];
 
+    public function __construct()
+    {
+        $this->middleware('CudBranch')->except('index');
+    }
     private function sameBranchesValidation($branches_number)
     {
         return [
@@ -170,8 +174,9 @@ class BranchController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request, $storeId)
+    public function store(Request $request)
     {
+        $storeId = 
         $request->validate([
             'branches' => ['required', 'boolean'],
         ]);
