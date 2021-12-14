@@ -22,7 +22,7 @@ class BranchController extends Controller
 
     public function __construct()
     {
-        $this->middleware('CudBranch')->except('index');
+        $this->middleware('auth:admin')->except('index');
     }
     private function sameBranchesValidation($branches_number)
     {
@@ -66,7 +66,7 @@ class BranchController extends Controller
             'name' => $request->input('store_name'),
             'short_name' => $request->input('store_name'),
             'address' => $request->input('address'),
-            'gps' => $request->input('gps'),
+            'gps' => 'gps location',
             'logo' => $jsonLogo,
             'store_id' => $storeId,
         ]);

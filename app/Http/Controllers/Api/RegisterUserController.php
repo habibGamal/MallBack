@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Cart;
 use App\Providers\RouteServiceProvider;
 use App\Models\User;
 use Illuminate\Foundation\Auth\RegistersUsers;
@@ -31,7 +32,7 @@ class RegisterUserController extends Controller
      * @var string
      */
     protected $redirectTo = RouteServiceProvider::HOME;
-
+    protected $wantsModel = false;
     /**
      * Create a new controller instance.
      *
@@ -39,7 +40,7 @@ class RegisterUserController extends Controller
      */
     public function __construct()
     {
-        $this->middleware('guest');
+        $this->middleware('guest:user,admin');
     }
 
     /**
@@ -66,11 +67,19 @@ class RegisterUserController extends Controller
      */
     protected function create(array $data)
     {
-        return User::create([
+        $u =  User::create([
             'name' => $data['name'],
             'gender' => $data['gender'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
         ]);
+        return $u;
+    }
+
+    protected function registered(Request $request, $user){
+        $cart = new Cart([
+            'user_id' => $user->id,
+        ]);
+        $user->cart()->save($cart);
     }
 }

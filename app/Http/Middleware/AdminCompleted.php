@@ -4,9 +4,8 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
-class CudBranch
+class AdminCompleted
 {
     /**
      * Handle an incoming request.
@@ -17,9 +16,10 @@ class CudBranch
      */
     public function handle(Request $request, Closure $next)
     {
-        if(!Auth::guard('admin')->check()){
-            return response()->json(['msg'=>'You are not Authorized to perform this action'],401);
-        };
-        return $next($request);
+        $count = auth('admin')->user()->store->branches->count();
+        if($count > 0){
+            return $next($request);
+        }
+        return redirectJson('ADMIN_NOT_COMPLETE');
     }
 }

@@ -12,32 +12,43 @@ use Illuminate\Validation\ValidationException;
 
 class AdminAuthController extends Controller
 {
-    public function login(Request $request){
-        if(Auth::guard('admin')->check()){
-            return redirectJson('LOGIN');
-        }
+
+    /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        $this->middleware('guest:user,admin')->only('login');
+        $this->middleware('auth:admin')->only('logout');
+    }
+    public function login(Request $request)
+    {
         $request->validate([
             'email' => 'required|email',
             'password' => 'required',
         ]);
-    
+
         $user = Admin::where('email', $request->email)->first();
-    
-        if (! $user || ! Hash::check($request->password, $user->password)) {
+
+        if (!$user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
             ]);
         }
-    
+
         return $user->createToken((new DateTime())->getTimestamp())->plainTextToken;
     }
-    public function logout(Request $request){
+    public function logout(Request $request)
+    {
         $request->user('admin')->currentAccessToken()->delete();
-    
-        return ;
+
+        return;
     }
-    public function clearTokens(Request $request){
+    public function clearTokens(Request $request)
+    {
         $request->user('admin')->tokens()->delete();
-        return ;
+        return;
     }
 }

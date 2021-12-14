@@ -11,6 +11,11 @@ use Illuminate\Validation\Rule;
 
 class StoreController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('guest:admin,user');
+    }
+    
     private function storeRules()
     {
         return [
@@ -57,10 +62,9 @@ class StoreController extends Controller
      */
     public function store(Request $request, RegisterAdminController $registerAdminController)
     {
-        dumph($request->all());
         // => validation {{ I am not using StoreRequest to validate as I validate more than one thing (branch,admin,store) }}
         $valildator = Validator::make($request->all(), $this->storeRules(), [], ['work_hours.from' => 'Work hours from', 'work_hours.to' => 'Work hours to']);
-        $validated = $valildator->validated();
+        $valildator->validated();
         // $request->validate($this->storeRules());
         // => create admin account
         $admin = $registerAdminController->register($request);

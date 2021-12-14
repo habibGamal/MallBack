@@ -5,11 +5,14 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
 
 if (!function_exists('dumph')) {
+    // => ''
     function redirectJson($type)
     {
         switch ($type) {
             case 'LOGIN':
-                return new JsonResponse(['location' => '/', 'message' => 'You are alrady logged in!'], 302);
+                return new JsonResponse(['location' => '/', 'message' => 'userAlreadyAuthenticated'], 302);
+            case 'ADMIN_NOT_COMPLETE':
+                return new JsonResponse(['location' => '/', 'message' => 'adminNotComplete'], 403);
             default:
                 return;
         }
@@ -42,13 +45,13 @@ if (!function_exists('childrenLevel')) {
 }
 
 if (!function_exists('savePhotos')) {
-    function savePhotos($photos,$positions)
+    function savePhotos($photos, $positions)
     {
         $result = [];
         for ($i = 0; $i < count($photos); $i++) {
             $photo = [];
-            // => get the position of each picture
-            $position = $positions[$i] ? json_decode($positions[$i]):null;
+            // => get the position of each picture (decode it to encode [path,position] together)
+            $position = $positions[$i] ? json_decode($positions[$i]) : null;
             // => choose disk (locally or on google drive)
             if (env('DISK', 'google') === 'google') {
                 // => store it in disk 

@@ -5,12 +5,15 @@ use App\Http\Controllers\Api\AdminAuthController;
 use App\Http\Controllers\Api\RegisterAdminController;
 use App\Http\Controllers\Api\RegisterUserController;
 use App\Http\Controllers\BranchController;
+use App\Http\Controllers\CartController;
+use App\Http\Controllers\CartItemsController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\StoreController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 
 /*
 |--------------------------------------------------------------------------
@@ -56,14 +59,30 @@ Route::middleware(['throttle:60,1'])->group(function () {
 // => product
 Route::apiResource('product', ProductController::class);
 Route::post('/product/deleteList', [ProductController::class, 'destroyList']);
+
+
+Route::post('/getRowPicture', function (Request $request) {
+    $paths = [];
+    foreach ($request->paths as $key => $path) {
+        $full_path = Storage::path($path);
+        $base64 = base64_encode(Storage::get($path));
+        $image_data = 'data:' . mime_content_type($full_path) . ';base64,' . $base64;
+        $paths[] = $image_data;
+    }
+    return $paths;
+});
 // => store
 Route::apiResource('store', StoreController::class);
 // => branch
 Route::apiResource('branch', BranchController::class);
+// => cart
+Route::apiResource('cart-item', CartItemsController::class);
 
 
 // testing area
 
-Route::get('/getheaders', function (Request $request) {
-    dumph($request->header());
+Route::post('/test', function (Request $request) {
+    $t = base64_encode(Storage::get($request->path));
+    dumph($t);
+    return '';
 });

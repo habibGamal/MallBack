@@ -35,7 +35,9 @@ class Logos implements Rule
                 $logo = array_filter($array_of_logos, function ($value) use ($i) {
                     return ($i + 1) == intval($value->getClientOriginalName());
                 });
-                $logos_to_valid[] = count($logo) > 0 ? $logo[0] : null;
+                if(array_key_exists(0,$logo)){
+                    $logos_to_valid[] = $logo[0];
+                }
             }
             $errors = [];
             foreach ($logos_to_valid as $key => $value) {
