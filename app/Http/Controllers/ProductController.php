@@ -2,18 +2,60 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\EditProductRequset;
 use App\Http\Requests\ProductRequest;
 use App\Models\Option;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class ProductController extends Controller
 {
     public function __construct()
     {
-        $this->middleware([ 'auth:admin' ,'adminComplete'])->except('index','show');
+        $this->middleware(['auth:admin', 'adminComplete'])->except('index', 'show');
+    }
+    private function editPictures($product, $request)
+    {
+        $pictures = json_decode($product->pictures);
+        $deletedPictures = json_decode($request->deletePictures);
+        $resizedPictures = json_decode($request->resizedPictures);
+
+        if (!empty($deletedPictures)) {
+            foreach ($deletedPictures as $_ => $deletedPicture) {
+                foreach ($pictures as $key => $picture) {
+                    if ($picture->path == $deletedPicture) {
+                        unset($pictures[$key]);
+                    }
+                }
+            }
+            $pictures = array_values($pictures);
+        }
+
+        if (!empty($resizedPictures)) {
+            foreach ($resizedPictures as $_ => $resizedPicture) {
+                foreach ($pictures as $key => $picture) {
+                    if ($picture->path == $resizedPicture->path) {
+                        $picture->position = $resizedPicture->position;
+                    }
+                }
+            }
+        }
+
+        if (!empty($request->file('pictures'))) {
+            $jsonNewPictures = savePhotos($request->file('pictures'), $request->pictures_position);
+            // => compine the remaining of the old pictures and the new pictures
+            $product->pictures = json_encode(array_merge($pictures, json_decode($jsonNewPictures)));
+            return $product;
+        }
+        if (empty($pictures)) {
+            $product->pictures = false;
+            return $product;
+        }
+        $product->pictures = json_encode($pictures);
+        return $product;
     }
     /**
      * Display a listing of the resource.
@@ -36,7 +78,7 @@ class ProductController extends Controller
         // => validate request
         $request->validated();
         // => handle pictures
-        $jsonPictures = savePhotos($request->file('pictures'),$request->pictures_position);
+        $jsonPictures = savePhotos($request->file('pictures'), $request->pictures_position);
         // => create product
         $product = Product::create([
             'name' => $request->input('name'),
@@ -81,11 +123,11 @@ class ProductController extends Controller
     {
 
         return Product::with([
-                'category:id,name,parent_id',
-                'category.parent_category:id,name,parent_id',
-                'category.parent_category.parent_category:id,name',
-                'options'
-            ])
+            'category:id,name,parent_id',
+            'category.parent_category:id,name,parent_id',
+            'category.parent_category.parent_category:id,name',
+            'options'
+        ])
             ->findOrFail($id);
     }
 
@@ -96,9 +138,17 @@ class ProductController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(EditProductRequset $request, $id)
     {
-        //
+        // dumph($request->all());
+        $request->validated();
+        $product = Product::findOrFail($id);
+        $product = $this->editPictures($product, $request);
+        if ($product->pictures == false) {
+            throw ValidationException::withMessages(['pictures' => 'This field can\'t be empty']);
+        }
+        $product->save();
+        return $product;
     }
 
     /**

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Api\RegisterAdminController;
 use App\Http\Requests\BranchRequest;
+use App\Models\Branch;
 use App\Models\Store;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -15,7 +16,7 @@ class StoreController extends Controller
     {
         $this->middleware('guest:admin,user');
     }
-    
+
     private function storeRules()
     {
         return [
@@ -89,7 +90,7 @@ class StoreController extends Controller
      */
     public function show($id)
     {
-        //
+        return Branch::findOrFail($id);
     }
 
     /**

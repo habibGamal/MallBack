@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CartProduct extends Migration
+class BranchProduct extends Migration
 {
     /**
      * Run the migrations.
@@ -13,10 +13,9 @@ class CartProduct extends Migration
      */
     public function up()
     {
-        Schema::create('cart_product', function (Blueprint $table) {
-            $table->unsignedBigInteger('cart_id');
+        Schema::create('branch_product', function (Blueprint $table) {
+            $table->unsignedBigInteger('branch_id');
             $table->unsignedBigInteger('product_id');
-            $table->unsignedInteger('product_count')->default(1);
         });
     }
 
@@ -27,6 +26,6 @@ class CartProduct extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('cart_product');
+        Schema::dropIfExists('branch_product');
     }
 }
