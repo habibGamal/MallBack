@@ -30,6 +30,7 @@ class ProductRequest extends FormRequest
             'offer_price'=>'nullable|numeric',
             'category'=>'required|integer|min:0',
             'stock'=>['required',Rule::in(['0','1','2'])],
+            'branch_id'=>'required|exists:branches,id',
             'returnable'=>'required|boolean',
             'description'=>'nullable|string',
             'specifications'=>'nullable|string',

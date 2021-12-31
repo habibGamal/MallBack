@@ -13,6 +13,8 @@ if (!function_exists('dumph')) {
                 return new JsonResponse(['location' => '/', 'message' => 'userAlreadyAuthenticated'], 302);
             case 'ADMIN_NOT_COMPLETE':
                 return new JsonResponse(['location' => '/', 'message' => 'adminNotComplete'], 403);
+            case 'ADMIN_NOT_OWN_BRANCH':
+                return new JsonResponse(['location' => '/', 'message' => 'adminNotOwnBranch'], 401);
             default:
                 return;
         }
@@ -54,7 +56,7 @@ if (!function_exists('savePhotos')) {
             $position = $positions[$i] ? json_decode($positions[$i]) : null;
             // => choose disk (locally or on google drive)
             if (env('DISK', 'google') === 'google') {
-                // => store it in disk 
+                // => store it in disk
                 $path = $photos[$i]->store('', 'google');
                 // => get its url to save it in database
                 $url = Storage::disk('google')->url($path);

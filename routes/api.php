@@ -28,7 +28,7 @@ use Illuminate\Support\Facades\Storage;
 
 // manage authentication
 
-// => user 
+// => user
 // - login
 // - register
 Route::post('/login', [UserAuthController::class, 'login']);

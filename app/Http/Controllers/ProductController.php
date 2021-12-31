@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\EditProductRequset;
 use App\Http\Requests\ProductRequest;
+use App\Models\Branch;
 use App\Models\Option;
 use App\Models\Product;
 use Illuminate\Http\Request;
@@ -13,9 +14,14 @@ use Illuminate\Validation\ValidationException;
 
 class ProductController extends Controller
 {
-    public function __construct()
+    private $branches;
+    public function __construct(Request $request)
     {
-        $this->middleware(['auth:admin', 'adminComplete'])->except('index', 'show');
+        $this->middleware(['auth:admin', 'adminComplete','admin_own_branch'])->except('index', 'show');
+
+        if($request->user('admin')){
+            $this->branches = $request->user('admin')->store->branches;
+        }
     }
     private function editPictures($product, $request)
     {
@@ -73,7 +79,7 @@ class ProductController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(ProductRequest  $request)
+    public function store(ProductRequest $request)
     {
         // => validate request
         $request->validated();
@@ -93,6 +99,7 @@ class ProductController extends Controller
             'warranty' => $request->input('warranty'),
             'pictures' => $jsonPictures,
         ]);
+        $this->branches->find($request->input('branch_id'))->products()->attach($product->id);
         // => create colors option if it exists
         if ($colors = $request->input('colors_option')) {
             Option::create([

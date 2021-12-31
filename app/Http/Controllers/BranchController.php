@@ -22,7 +22,7 @@ class BranchController extends Controller
 
     public function __construct()
     {
-        $this->middleware('auth:admin')->except('index');
+        $this->middleware('auth:admin')->except('index', 'show');
     }
     private function sameBranchesValidation($branches_number)
     {
@@ -44,7 +44,7 @@ class BranchController extends Controller
      */
     public function index()
     {
-        //
+        return Branch::all();
     }
 
     /**
@@ -88,7 +88,7 @@ class BranchController extends Controller
         // => buffer data
         $data = [];
         for ($i = 0; $i < $request->branches_number; $i++) {
-            // => save logo and its position and get it as json [[path,position]] 
+            // => save logo and its position and get it as json [[path,position]]
             $jsonLogo = savePhotos([$logos[$i]], [$positions[$i]]);
             $data[] = [
                 'name' => $request->branch_names[$i],
@@ -150,7 +150,7 @@ class BranchController extends Controller
             'same_branches' => 'required|bool',
             'branches_number' => 'required|numeric|integer',
         ]);
-        $request = $request->input('same_branches') ? App::make(SameBranchesRequest::class): App::make(DifferentBranchesRequest::class);
+        $request = $request->input('same_branches') ? App::make(SameBranchesRequest::class) : App::make(DifferentBranchesRequest::class);
         return $request->input('same_branches')
             ? $this->createStoreWithSameBranches($request, $storeId)
             : $this->createStoreWithDifferentBranches($request, $storeId);
@@ -181,7 +181,13 @@ class BranchController extends Controller
      */
     public function show($id)
     {
-        //
+        $branch = Branch::findOrFail($id);
+        $productsOfBranch = $branch->products()->get(['id', 'pictures', 'name', 'price', 'offer_price']);
+        $returnedStructure = [
+            'branch' => $branch,
+            'products' => $productsOfBranch
+        ];
+        return $returnedStructure;
     }
 
     /**

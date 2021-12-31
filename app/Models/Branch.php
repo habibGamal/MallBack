@@ -11,11 +11,13 @@ class Branch extends Model
 
     protected $guarded = [];
 
-    public function store(){
+    public function store()
+    {
         return $this->belongsTo(Store::class);
     }
 
-    public function products(){
+    public function products()
+    {
         return $this->belongsToMany(Product::class);
     }
 }
