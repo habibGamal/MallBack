@@ -46,7 +46,8 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::get('/state', function () {
     $user = Auth::guard('user')->check();
     $admin = Auth::guard('admin')->check();
-    return ["user" => $user, "admin" => $admin];
+    $guest = !($user || $admin);
+    return ["user" => $user, "admin" => $admin, "guest" => $guest];
 });
 
 

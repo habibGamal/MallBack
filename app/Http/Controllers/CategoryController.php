@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\CategoryResource;
+use App\Models\Branch;
 use App\Models\Category;
 use Illuminate\Http\Request;
 
@@ -49,7 +50,7 @@ class CategoryController extends Controller
      */
     public function show($id)
     {
-        //
+        return Category::with(['products:id,category_id,name,price,offer_price,pictures','products.branches:id,name,logo'])->findOrFail($id);
     }
 
     /**
