@@ -31,7 +31,7 @@ class RegisterAdminController extends Controller
      * @var string
      */
     protected $redirectTo = RouteServiceProvider::HOME;
-    protected $wantsModel = true;
+    public $wantsModel = true;
 
     /**
      * Create a new controller instance.

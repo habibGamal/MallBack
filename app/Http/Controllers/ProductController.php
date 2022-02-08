@@ -19,8 +19,10 @@ class ProductController extends Controller
     {
         $this->middleware(['auth:admin', 'adminComplete','admin_own_branch'])->except('index', 'show');
 
-        if($request->user('admin')){
-            $this->branches = $request->user('admin')->store->branches;
+        if($admin = $request->user('admin')){
+            if($admin->store){
+                $this->branches = $request->user('admin')->store->branches;
+            }
         }
     }
     private function editPictures($product, $request)
