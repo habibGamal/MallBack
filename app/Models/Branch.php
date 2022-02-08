@@ -20,4 +20,9 @@ class Branch extends Model
     {
         return $this->belongsToMany(Product::class);
     }
+
+    public function orders()
+    {
+        return $this->belongsToMany(Order::class);
+    }
 }

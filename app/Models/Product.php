@@ -25,4 +25,9 @@ class Product extends Model
     public function branches(){
         return $this->belongsToMany(Branch::class);
     }
+
+    public function orders()
+    {
+        return $this->belongsToMany(Order::class)->withPivot(['product_count','branch_id']);
+    }
 }

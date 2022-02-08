@@ -4,7 +4,16 @@ use App\Http\Resources\CategoryResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
 
-if (!function_exists('dumph')) {
+if (!function_exists('message')) {
+    function message($dic, $code, $type)
+    {
+        $messagesDic = [
+            'ITEM_ALREADY_IN_CART' => 'This item is already in your cart',
+        ];
+        return new JsonResponse(['error_message' =>  $messagesDic[$dic], 'type' => $type], $code);
+    }
+}
+if (!function_exists('redirectJson')) {
     // => ''
     function redirectJson($type)
     {

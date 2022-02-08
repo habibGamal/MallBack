@@ -48,6 +48,38 @@ class BranchController extends Controller
     }
 
     /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function indexForOwner(Request $request)
+    {
+        return $request->user('admin')->store->branches;
+    }
+
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function getBranchesIds(Request $request)
+    {
+        return $request->user('admin')->store->branches->map->only(['id','name']);
+    }
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function productsOfBranch(Request $request,$branchId)
+    {
+        if($branchId){
+            return $request->user('admin')->store->branches->find($branchId)->products;
+        }
+        return $request->user('admin')->store->branches[0]->products;
+    }
+
+    /**
      * create store with ONLY one branch
      *
      * @param  \Illuminate\Http\Request  $request

@@ -8,6 +8,7 @@ use App\Http\Controllers\BranchController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CartItemsController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\StoreController;
 use Illuminate\Http\Request;
@@ -76,9 +77,17 @@ Route::post('/getRowPicture', function (Request $request) {
 Route::apiResource('store', StoreController::class);
 // => branch
 Route::apiResource('branch', BranchController::class);
+Route::get('branch-for-admin', [BranchController::class,'indexForOwner']);
+Route::get('get-branches-ids', [BranchController::class,'getBranchesIds']);
+Route::get('branch-products/{id}', [BranchController::class,'productsOfBranch']);
 // => cart
 Route::apiResource('cart-item', CartItemsController::class);
-
+// => order
+Route::apiResource('order', OrderController::class);
+Route::get('get-orders-for-branch/{id}', [OrderController::class,'getOrdersForBranch']);
+Route::get('get-orders-for-user', [OrderController::class,'getOrdersForUser']);
+Route::get('remove-product-from-order/{product_id}/{order_id}', [OrderController::class,'removeProductFromOrder']);
+Route::get('cancel-order/{order_id}', [OrderController::class,'cancelOrder']);
 
 // testing area
 

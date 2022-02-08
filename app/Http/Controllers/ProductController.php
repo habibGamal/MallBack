@@ -85,11 +85,13 @@ class ProductController extends Controller
         $request->validated();
         // => handle pictures
         $jsonPictures = savePhotos($request->file('pictures'), $request->pictures_position);
+        // => handle offer price
+        $offerPrice = $request->input('offer_price') ?? $request->input('price');
         // => create product
         $product = Product::create([
             'name' => $request->input('name'),
             'price' => $request->input('price'),
-            'offer_price' => $request->input('offer_price'),
+            'offer_price' => $offerPrice,
             'category_id' => $request->input('category'),
             'stock' => $request->input('stock'),
             'returnable' => $request->input('returnable'),

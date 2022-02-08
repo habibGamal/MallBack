@@ -48,8 +48,7 @@ class CartItemsController extends Controller
         $product_id = $request->product_id;
         $cart_item = $this->cart->products->firstWhere('id', $product_id);
         if ($cart_item) {
-            return response()
-                ->json(['message' => 'Item already in the cart'], 403);
+            return message('ITEM_ALREADY_IN_CART',403,'warning');
         }
         $this->cart->products()->attach($product_id);
         return $this->cart->products()->find($product_id);
@@ -84,5 +83,10 @@ class CartItemsController extends Controller
     public function destroy($id)
     {
         return $this->cart->products()->detach($id);;
+    }
+
+    public function emptyCart()
+    {
+        return $this->cart->products()->detach();;
     }
 }
