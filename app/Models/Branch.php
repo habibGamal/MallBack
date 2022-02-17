@@ -25,4 +25,8 @@ class Branch extends Model
     {
         return $this->belongsToMany(Order::class);
     }
+
+    public function notifications(){
+        return $this->hasMany(Notification::class,'r_branch_id');
+    }
 }

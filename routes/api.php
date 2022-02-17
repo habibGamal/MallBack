@@ -8,6 +8,7 @@ use App\Http\Controllers\BranchController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CartItemsController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\StoreController;
@@ -82,12 +83,19 @@ Route::get('get-branches-ids', [BranchController::class,'getBranchesIds']);
 Route::get('branch-products/{id}', [BranchController::class,'productsOfBranch']);
 // => cart
 Route::apiResource('cart-item', CartItemsController::class);
-// => order
-Route::apiResource('order', OrderController::class);
-Route::get('get-orders-for-branch/{id}', [OrderController::class,'getOrdersForBranch']);
-Route::get('get-orders-for-user', [OrderController::class,'getOrdersForUser']);
+// => order ,user
 Route::get('remove-product-from-order/{product_id}/{order_id}', [OrderController::class,'removeProductFromOrder']);
 Route::get('cancel-order/{order_id}', [OrderController::class,'cancelOrder']);
+Route::get('get-orders-for-user', [OrderController::class,'getOrdersForUser']);
+// => order ,admin
+Route::get('get-orders-for-branch/{id}', [OrderController::class,'getOrdersForBranch']);
+Route::get('admin-accept-order/{branch_id}/{order_id}', [OrderController::class,'acceptOrder']);
+// => notifications
+Route::get('get-notifications-for-branches', [NotificationController::class,'getNotificationsForBranches']);
+Route::get('get-notifications-for-user', [NotificationController::class,'getNotificationsForUser']);
+Route::post('notifications-seen-for-branches', [NotificationController::class,'seenNotificationsForBranches']);
+Route::post('notifications-seen-for-user', [NotificationController::class,'seenNotificationsForUsers']);
+
 
 // testing area
 

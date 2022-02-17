@@ -10,45 +10,86 @@ use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
+    private $notifi;
     public function __construct()
     {
-        $this->middleware('auth:user')->only(['store','getOrdersForUser','removeProductFromOrder']);
+        $this->middleware('auth:user')->only(['store', 'getOrdersForUser', 'removeProductFromOrder', 'cancelOrder']);
         $this->middleware('auth:admin')->only(['getOrdersForBranch']);
+        $this->notifi = new NotificationController();
     }
+
+
+    public function acceptOrder(Request $request,$branch_id,$order_id){
+        $branch = $request->user('admin')->store->branches()->select(['id'])->findOrFail($branch_id);
+        $order = $branch->orders()->select(['id','user_id'])->findOrFail($order_id);
+        $order->status = 'accepted';
+        $order->save();
+        $this->notifi->notifyUserFromBranch($request,$branch_id,$order->user->id,'Your order has been accepted');
+        return true;
+    }
+
     /**
-     * Display a listing of the resource.
+     * Display orders for a branch
      *
+     * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function getOrdersForBranch(Request $request, $id)
     {
-        //
+        // => default id
+        if (!$id) {
+            $defaultId = $request->user('admin')->store->branches[0]->id;
+            return Branch::select(['id'])->where('id', $defaultId)->with([
+                'orders'=> function ($query){
+                    $query->latest();
+                },
+                'orders.products' => function ($query) use ($id) {
+                    $query->where('branch_id', $id);
+                }
+            ])->get()[0]->orders;
+        }
+        // => required id
+        return Branch::select(['id'])->where('id', $id)->with([
+            'orders'=> function ($query){
+                $query->latest();
+            },
+            'orders.products' => function ($query) use ($id) {
+            $query->where('branch_id', $id);
+        }])->get()[0]->orders;
+    }
+    public function calcShippingCost()
+    {
+        return 10;
     }
 
-
+    // => user site
+    /**
+     * Cancel order
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function cancelOrder(Request $request, $order_id)
+    {
+        $order = $request->user('user')->orders->find($order_id);
+        if ($order) {
+            $branches_id = $order->branches()->select(['id'])->get()->map->id;
+            $this->notifi->notifyBranchsFromUser($request, $branches_id, 'The customer cancel his order');
+            $order->products()->detach();
+            return  $order->delete();
+        }
+        return false;
+    }
     /**
      * Display the specified resource.
      *
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function cancelOrder(Request $request,$order_id)
+    public function removeProductFromOrder(Request $request, $product_id, $order_id)
     {
         $order = $request->user('user')->orders->find($order_id);
-        $order->products()->detach();
-        return  $order->delete();
-    }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function removeProductFromOrder(Request $request,$product_id,$order_id)
-    {
-        $order = $request->user('user')->orders->find($order_id);
-        if($order){
+        if ($order) {
             $order->products()->detach($product_id);
             $order->total_cost = $order->products()->sum('offer_price');
             $order->save();
@@ -66,33 +107,11 @@ class OrderController extends Controller
     public function getOrdersForUser(Request $request)
     {
         $user = $request->user('user');
-        return $request->user('user')->with(['orders','orders.products:id,pictures,name,price','orders.products.branches:id,name'])->where('id',$user->id)->get(['id'])[0]->orders;
+        return $request->user('user')->with(['orders'=> function($query){$query->latest();}, 'orders.products:id,pictures,name,price', 'orders.products.branches:id,name'])->where('id', $user->id)->get(['id'])[0]->orders;
     }
 
     /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function getOrdersForBranch(Request $request, $id)
-    {
-        $defaultId = $request->user('admin')->store->branches[0]->id;
-        if (!$id) {
-            return Branch::select(['id'])->where('id', $defaultId)->with(['orders', 'orders.products' => function ($query) use ($id) {
-                $query->where('branch_id', $id);
-            }])->get()[0]->orders;
-        }
-        return Branch::select(['id'])->where('id', $id)->with(['orders', 'orders.products' => function ($query) use ($id) {
-            $query->where('branch_id', $id);
-        }])->get()[0]->orders;
-    }
-    public function calcShippingCost()
-    {
-        return 10;
-    }
-    /**
-     * Store a newly created resource in storage.
+     * user make order
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
@@ -127,41 +146,7 @@ class OrderController extends Controller
         $order->branches()->attach(array_unique($order_branch_pivots));
         $cartController = new CartItemsController($request);
         // $cartController->emptyCart();
+        $this->notifi->notifyBranchsFromUser($request, $order_branch_pivots, 'You have new Order');
         return $order;
-    }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
-    }
-
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        //
     }
 }
