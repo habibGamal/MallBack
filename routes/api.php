@@ -84,7 +84,8 @@ Route::get('branch-products/{id}', [BranchController::class,'productsOfBranch'])
 // => cart
 Route::apiResource('cart-item', CartItemsController::class);
 // => order ,user
-Route::get('remove-product-from-order/{product_id}/{order_id}', [OrderController::class,'removeProductFromOrder']);
+Route::post('/create-order',[OrderController::class,'store']);
+Route::get('remove-product-from-order/{item_id}/{order_id}', [OrderController::class,'removeProductFromOrder']);
 Route::get('cancel-order/{order_id}', [OrderController::class,'cancelOrder']);
 Route::get('get-orders-for-user', [OrderController::class,'getOrdersForUser']);
 // => order ,admin

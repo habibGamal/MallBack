@@ -26,8 +26,7 @@ class Product extends Model
         return $this->belongsToMany(Branch::class);
     }
 
-    public function orders()
-    {
-        return $this->belongsToMany(Order::class)->withPivot(['product_count','branch_id']);
+    public function orderedItem(){
+        return $this->hasOne(OrderedItem::class);
     }
 }

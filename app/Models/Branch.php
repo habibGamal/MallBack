@@ -21,9 +21,13 @@ class Branch extends Model
         return $this->belongsToMany(Product::class);
     }
 
+    public function orderedItems(){
+        return $this->hasMany(OrderedItem::class);
+    }
+
     public function orders()
     {
-        return $this->belongsToMany(Order::class);
+        return $this->belongsToMany(Order::class,'ordered_items');
     }
 
     public function notifications(){

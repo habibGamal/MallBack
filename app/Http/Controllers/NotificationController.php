@@ -21,6 +21,18 @@ class NotificationController extends Controller
         ]);
     }
 
+
+
+    public function notifyBranchFromUser(Request $request, $id, $msg)
+    {
+        $user_id = $request->user('user')->id;
+        return Notification::create([
+            'r_branch_id' => $id,
+            's_user_id' => $user_id,
+            'message' => $msg,
+        ]);
+    }
+
     public function notifyBranchsFromUser(Request $request, $ids, $msg)
     {
         // we can get it from the caller

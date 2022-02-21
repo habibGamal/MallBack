@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Branch;
 use App\Models\Order;
+use App\Models\OrderedItem;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -18,14 +19,41 @@ class OrderController extends Controller
         $this->notifi = new NotificationController();
     }
 
+    private function determineOrderState($order)
+    {
+        $items = $order->orderedItems()->select(['id', 'state'])->get()->map->state;
+        $states = [
+            'pending' => 0,
+            'accepted' => 0,
+            'delivering' => 0,
+        ];
+        foreach ($items as $item) {
+            if ($item == 'pending')
+                $states['pending']++;
+            if ($item == 'accepted')
+                $states['accepted']++;
+            if ($item == 'delivering')
+                $states['delivering']++;
+        }
+        function getFinalState($states)
+        {
+            if ($states['pending'] != 0)
+                return 'pending';
+            if ($states['accepted'] != 0)
+                return 'accepted';
+            if ($states['delivering'] != 0)
+                return 'delivering';
+        }
+        return $order->update(['status' => getFinalState($states)]);
+    }
 
-    public function acceptOrder(Request $request,$branch_id,$order_id){
+    public function acceptOrder(Request $request, $branch_id, $order_id)
+    {
         $branch = $request->user('admin')->store->branches()->select(['id'])->findOrFail($branch_id);
-        $order = $branch->orders()->select(['id','user_id'])->findOrFail($order_id);
-        $order->status = 'accepted';
-        $order->save();
-        $this->notifi->notifyUserFromBranch($request,$branch_id,$order->user->id,'Your order has been accepted');
-        return true;
+        $branch->orderedItems()->where('order_id', $order_id)->update(['state' => 'accepted']);
+        $order = Order::select(['id', 'status'])->findOrFail($order_id);
+        $this->notifi->notifyUserFromBranch($request, $branch_id, $order->user->id, 'Your order has been accepted');
+        return $this->determineOrderState($order);
     }
 
     /**
@@ -38,24 +66,10 @@ class OrderController extends Controller
     {
         // => default id
         if (!$id) {
-            $defaultId = $request->user('admin')->store->branches[0]->id;
-            return Branch::select(['id'])->where('id', $defaultId)->with([
-                'orders'=> function ($query){
-                    $query->latest();
-                },
-                'orders.products' => function ($query) use ($id) {
-                    $query->where('branch_id', $id);
-                }
-            ])->get()[0]->orders;
+            return $request->user('admin')->store->branches[0]->orders()->select(['orders.id'])->get()->load(['orderedItems', 'orderedItems.product:id,name,offer_price,stock']);
         }
         // => required id
-        return Branch::select(['id'])->where('id', $id)->with([
-            'orders'=> function ($query){
-                $query->latest();
-            },
-            'orders.products' => function ($query) use ($id) {
-            $query->where('branch_id', $id);
-        }])->get()[0]->orders;
+        return $request->user('admin')->store->branches()->findOrFail($id)->orders()->select(['orders.id'])->get()->load(['orderedItems', 'orderedItems.product:id,name,offer_price,stock']);
     }
     public function calcShippingCost()
     {
@@ -71,14 +85,15 @@ class OrderController extends Controller
      */
     public function cancelOrder(Request $request, $order_id)
     {
-        $order = $request->user('user')->orders->find($order_id);
-        if ($order) {
-            $branches_id = $order->branches()->select(['id'])->get()->map->id;
-            $this->notifi->notifyBranchsFromUser($request, $branches_id, 'The customer cancel his order');
-            $order->products()->detach();
-            return  $order->delete();
-        }
-        return false;
+        // => get the order
+        $order = $request->user('user')->orders()->findOrFail($order_id);
+        // => get branches ids to send notification to them
+        $branches_id = $order->branches()->select(['branches.id'])->get()->map->id;
+        $this->notifi->notifyBranchsFromUser($request, $branches_id, 'The customer cancel his order');
+        // => delete order items
+        $order->orderedItems()->delete();
+        // => delete the order
+        return  $order->delete();
     }
     /**
      * Display the specified resource.
@@ -86,16 +101,23 @@ class OrderController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function removeProductFromOrder(Request $request, $product_id, $order_id)
+    public function removeProductFromOrder(Request $request, $item_id, $order_id)
     {
-        $order = $request->user('user')->orders->find($order_id);
-        if ($order) {
-            $order->products()->detach($product_id);
-            $order->total_cost = $order->products()->sum('offer_price');
-            $order->save();
-            return $order;
+        // => get the order
+        $order = $request->user('user')->orders()->select(['id', 'total_cost', 'shipping_cost'])->findOrFail($order_id);
+        // => get the item will be removed with product offer_price
+        $removedItem = $order->orderedItems()->findOrFail($item_id)->load('product:id,offer_price,name');
+        // => delete the item
+        $removedItem->delete();
+        // => update the total_cost
+        $newTotalPrice =  $order->total_cost - ($removedItem->product->offer_price * $removedItem->count);
+        // => if the new total_price == shipping_cost this means that no items in the order ,so delete it
+        if ($newTotalPrice == $order->shipping_cost) {
+            return $order->delete();
         }
-        return 'false'; // temporary
+        $order->total_cost = $newTotalPrice;
+        $this->notifi->notifyBranchFromUser($request, $removedItem->branch_id, "Item ({$removedItem->product->name}) has been removed from order $order->id review the order please");
+        return $order->save();
     }
 
     /**
@@ -107,7 +129,7 @@ class OrderController extends Controller
     public function getOrdersForUser(Request $request)
     {
         $user = $request->user('user');
-        return $request->user('user')->with(['orders'=> function($query){$query->latest();}, 'orders.products:id,pictures,name,price', 'orders.products.branches:id,name'])->where('id', $user->id)->get(['id'])[0]->orders;
+        return $user->orders->load(['orderedItems.branch:id,name', 'orderedItems.product:id,pictures,name,offer_price']);
     }
 
     /**
@@ -121,7 +143,15 @@ class OrderController extends Controller
         // get the current user id
         $user = $request->user('user');
         // calculate total_cost
-        $products_price_sum = $user->cart->products->sum('offer_price');
+        $products_price_sum = $user->cart
+            ->products()
+            ->select(['id', 'offer_price'])
+            ->get()
+            ->sum(
+                function ($product) {
+                    return $product->offer_price * $product->pivot->product_count;
+                }
+            );
         $shippingCost = $this->calcShippingCost();
         $total_sum = $products_price_sum + $shippingCost;
         // get [product_id,product_count] pivots from current cart and branch_id for each product_id
@@ -131,22 +161,21 @@ class OrderController extends Controller
             ->select('cart_product.product_id', 'cart_product.product_count', 'branch_product.branch_id')
             ->where('cart_id', $cartId)
             ->get();
-        $order_product_pivots = []; // which will be stored in order_product pivots
-        $order_branch_pivots = []; // which will be stored in order_product pivots
-        foreach ($product_count_branch_pivots as $_ => $pivot) {
-            $order_product_pivots[$pivot->product_id] = ['product_count' => $pivot->product_count, 'branch_id' => $pivot->branch_id];
-            $order_branch_pivots[] = $pivot->branch_id;
-        }
         $order = Order::create([
             'user_id' => $user->id,
             'shipping_cost' => $shippingCost,
             'total_cost' => $total_sum,
         ]);
-        $order->products()->attach($order_product_pivots);
-        $order->branches()->attach(array_unique($order_branch_pivots));
-        $cartController = new CartItemsController($request);
-        // $cartController->emptyCart();
-        $this->notifi->notifyBranchsFromUser($request, $order_branch_pivots, 'You have new Order');
-        return $order;
+        $items = []; // which will be stored in order_product pivots
+        $branches_id = []; // to notify them
+        foreach ($product_count_branch_pivots as $_ => $pivot) {
+            $items[] = ['product_id' => $pivot->product_id, 'count' => $pivot->product_count, 'branch_id' => $pivot->branch_id, 'state' => 'pending', 'order_id' => $order->id];
+            $branches_id[] = $pivot->branch_id;
+        }
+        $orderedItems = OrderedItem::insert($items);
+        // $cartController = new CartItemsController($request);
+        // // $cartController->emptyCart();
+        $this->notifi->notifyBranchsFromUser($request, $branches_id, 'You have new Order');
+        return $products_price_sum;
     }
 }

@@ -15,12 +15,13 @@ class Order extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function products()
+    public function orderedItems()
     {
-        return $this->belongsToMany(Product::class)->withPivot(['product_count','branch_id']);
+        return $this->hasMany(OrderedItem::class);
     }
 
-    public function branches(){
-        return $this->belongsToMany(Branch::class);
+    public function branches()
+    {
+        return $this->belongsToMany(Branch::class,'ordered_items');
     }
 }
