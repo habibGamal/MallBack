@@ -17,10 +17,10 @@ class ProductController extends Controller
     private $branches;
     public function __construct(Request $request)
     {
-        $this->middleware(['auth:admin', 'adminComplete','admin_own_branch'])->except('index', 'show');
+        $this->middleware(['auth:admin', 'adminComplete', 'admin_own_branch'])->except('index', 'show');
 
-        if($admin = $request->user('admin')){
-            if($admin->store){
+        if ($admin = $request->user('admin')) {
+            if ($admin->store) {
                 $this->branches = $request->user('admin')->store->branches;
             }
         }
@@ -72,7 +72,7 @@ class ProductController extends Controller
      */
     public function index()
     {
-        return Product::select('id', 'pictures', 'name', 'price', 'offer_price')->get();
+        return Product::select('id', 'pictures', 'name', 'price', 'offer_price')->latest()->get()->shuffle();
     }
 
     /**
