@@ -132,7 +132,8 @@ class BranchController extends Controller
             ];
         }
 
-        $branchs = Branch::upsert($data, ['name', 'short_name', 'address', 'gps', 'logo', 'store_id']);
+        // $branchs = Branch::upsert($data, ['name', 'short_name', 'address', 'gps', 'logo', 'store_id']);
+        $branchs = Branch::insert($data);
         return $branchs;
     }
 
