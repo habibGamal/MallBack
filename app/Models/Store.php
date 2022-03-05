@@ -18,4 +18,8 @@ class Store extends Model
     public function branches(){
         return $this->hasMany(Branch::class);
     }
+
+    public function orderedItems(){
+        return $this->hasManyThrough(OrderedItem::class,Branch::class);
+    }
 }

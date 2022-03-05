@@ -2,16 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Branch;
 use App\Models\Order;
 use App\Models\OrderedItem;
-use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
     private $notifi;
+    private $states = [
+        'reject' => 'reject',
+        'accept' => 'accept',
+        'pending' => 'pending',
+        'conflict' => 'conflict',
+    ];
     public function __construct()
     {
         $this->middleware('auth:user')->only(['store', 'getOrdersForUser', 'removeProductFromOrder', 'cancelOrder']);
@@ -19,70 +23,27 @@ class OrderController extends Controller
         $this->notifi = new NotificationController();
     }
 
-    private function determineOrderState($order)
-    {
-        $items = $order->orderedItems()->select(['id', 'state'])->get()->map->state;
-        $states = [
-            'pending' => 0,
-            'accepted' => 0,
-            'delivering' => 0,
-        ];
-        foreach ($items as $item) {
-            if ($item == 'pending')
-                $states['pending']++;
-            if ($item == 'accepted')
-                $states['accepted']++;
-            if ($item == 'delivering')
-                $states['delivering']++;
-        }
-        function getFinalState($states)
-        {
-            if ($states['pending'] != 0)
-                return 'pending';
-            if ($states['accepted'] != 0)
-                return 'accepted';
-            if ($states['delivering'] != 0)
-                return 'delivering';
-        }
-        return $order->update(['status' => getFinalState($states)]);
-    }
-
-    public function acceptOrder(Request $request, $branch_id, $order_id)
-    {
-        $branch = $request->user('admin')->store->branches()->select(['id'])->findOrFail($branch_id);
-        $branch->orderedItems()->where('order_id', $order_id)->update(['state' => 'accepted']);
-        $order = Order::select(['id', 'status'])->findOrFail($order_id);
-        $this->notifi->notifyUserFromBranch($request, $branch_id, $order->user->id, 'Your order has been accepted');
-        return $this->determineOrderState($order);
-    }
-
-    /**
-     * Display orders for a branch
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function getOrdersForBranch(Request $request, $id)
-    {
-        // => default id
-        if (!$id) {
-            return $request->user('admin')->store->branches[0]->orders()->select(['orders.id'])->get()->load(['orderedItems', 'orderedItems.product:id,name,offer_price,stock']);
-        }
-        // => required id
-        return $request->user('admin')->store->branches()->findOrFail($id)->orders()->select(['orders.id'])->get()->load(['orderedItems', 'orderedItems.product:id,name,offer_price,stock']);
-    }
     public function calcShippingCost()
     {
         return 10;
     }
 
-    // => user site
-    /**
-     * Cancel order
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
+    public function refuseOrderAfterConflict(Request $request, $order_id)
+    {
+        // => get the order
+        $order = $request->user('user')->orders()->findOrFail($order_id);
+        $items = $order->orderedItems()->select(['id', 'branch_id'])->where('state', $this->states['accept'])->get();
+        $this->notifi->notifyBranchsFromUser($request, $items->flatMap->branch_id, 'The customer cancel his order');
+        return $order->delete();
+    }
+    public function proccedAfterConflict(Request $request, $order_id)
+    {
+        // => get the order
+        $order = $request->user('user')->orders()->findOrFail($order_id);
+        $order->orderedItems()->where('state', $this->states['reject'])->delete();
+        return $order->update(['status' => $this->states['accept']]);
+    }
+
     public function cancelOrder(Request $request, $order_id)
     {
         // => get the order
@@ -95,12 +56,7 @@ class OrderController extends Controller
         // => delete the order
         return  $order->delete();
     }
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
+
     public function removeProductFromOrder(Request $request, $item_id, $order_id)
     {
         // => get the order
@@ -117,7 +73,7 @@ class OrderController extends Controller
         }
         $order->total_cost = $newTotalPrice;
         $this->notifi->notifyBranchFromUser($request, $removedItem->branch_id, "Item ({$removedItem->product->name}) has been removed from order $order->id review the order please");
-        return $order->save();
+        return $order->total_cost;
     }
 
     /**
@@ -129,7 +85,7 @@ class OrderController extends Controller
     public function getOrdersForUser(Request $request)
     {
         $user = $request->user('user');
-        return $user->orders->load(['orderedItems.branch:id,name', 'orderedItems.product:id,pictures,name,offer_price']);
+        return $user->orders()->latest()->get()->load(['orderedItems.branch:id,name', 'orderedItems.product:id,pictures,name,offer_price']);
     }
 
     /**
@@ -172,10 +128,10 @@ class OrderController extends Controller
             $items[] = ['product_id' => $pivot->product_id, 'count' => $pivot->product_count, 'branch_id' => $pivot->branch_id, 'state' => 'pending', 'order_id' => $order->id];
             $branches_id[] = $pivot->branch_id;
         }
-        $orderedItems = OrderedItem::insert($items);
-        // $cartController = new CartItemsController($request);
-        // // $cartController->emptyCart();
+        OrderedItem::insert($items);
+        $cartController = new CartItemsController($request);
+        $cartController->emptyCart();
         $this->notifi->notifyBranchsFromUser($request, $branches_id, 'You have new Order');
-        return $products_price_sum;
+        return $order;
     }
 }

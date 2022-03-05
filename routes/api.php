@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminOrderController;
 use App\Http\Controllers\Api\UserAuthController;
 use App\Http\Controllers\Api\AdminAuthController;
 use App\Http\Controllers\Api\RegisterAdminController;
@@ -88,9 +89,13 @@ Route::post('/create-order',[OrderController::class,'store']);
 Route::get('remove-product-from-order/{item_id}/{order_id}', [OrderController::class,'removeProductFromOrder']);
 Route::get('cancel-order/{order_id}', [OrderController::class,'cancelOrder']);
 Route::get('get-orders-for-user', [OrderController::class,'getOrdersForUser']);
+Route::get('refuse-order-after-conflict/{order_id}', [OrderController::class,'refuseOrderAfterConflict']);
+Route::get('procced-order-after-conflict/{order_id}', [OrderController::class,'proccedAfterConflict']);
 // => order ,admin
-Route::get('get-orders-for-branch/{id}', [OrderController::class,'getOrdersForBranch']);
-Route::get('admin-accept-order/{branch_id}/{order_id}', [OrderController::class,'acceptOrder']);
+Route::get('get-orders-for-branch/{id}', [AdminOrderController::class,'getOrdersForBranch']);
+Route::get('admin-accept-order/{branch_id}/{order_id}', [AdminOrderController::class,'acceptOrder']);
+Route::get('admin-reject-order/{branch_id}/{order_id}', [AdminOrderController::class,'rejectOrder']);
+Route::get('reject-product-from-order/{item_id}/{order_id}/{branch_id}', [AdminOrderController::class,'rejectProductFromOrder']);
 // => notifications
 Route::get('get-notifications-for-branches', [NotificationController::class,'getNotificationsForBranches']);
 Route::get('get-notifications-for-user', [NotificationController::class,'getNotificationsForUser']);
